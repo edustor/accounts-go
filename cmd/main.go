@@ -4,37 +4,12 @@ import (
 	"github.com/edustor/accounts-go/app"
 	"log"
 	"net/http"
-	"encoding/base64"
-	"os"
-	"github.com/dgrijalva/jwt-go"
-	"strings"
+	"github.com/edustor/accounts-go/app/cfg"
 )
 
 func main() {
-	privateKeyBase64 := os.Getenv("edustor.jwt.privatekey")
-
-	log.Print("Key len: ", strings.Count(privateKeyBase64, ""))
-
-	keyBytes, err := base64.StdEncoding.DecodeString(privateKeyBase64)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	key, err := jwt.ParseRSAPrivateKeyFromPEM(keyBytes)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	err = key.Validate()
-	if err != nil {
-		log.Panic(err)
-	}
-
-	cfg := app.Config{
-		Jwt: app.JwtConfig{
-			RsaPrivateKey: key,
-		},
-	}
-	router := app.Router(cfg)
+	router := app.Router(cfg.FromEnv())
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.Println("Listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

@@ -7,10 +7,11 @@ import (
 	"context"
 	"github.com/dgrijalva/jwt-go"
 	"log"
+	"github.com/edustor/accounts-go/app/cfg"
 )
 
 func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	config, ok := r.Context().Value(ConfigKey).(Config)
+	config, ok := r.Context().Value(cfg.ConfigKey).(cfg.Config)
 	if !ok {
 		log.Panic("Can't get token from context")
 	}
@@ -33,14 +34,14 @@ func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 func ConfigMiddleware(h http.HandlerFunc, config interface{}) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		ctx = context.WithValue(ctx, ConfigKey, config)
+		ctx = context.WithValue(ctx, cfg.ConfigKey, config)
 		r = r.WithContext(ctx)
 		h(w, r)
 	}
 }
 
-func Router(config Config) http.Handler {
+func Router(cfg cfg.Config) http.Handler {
 	router := httprouter.New()
 	router.GET("/", index)
-	return ConfigMiddleware(http.HandlerFunc(router.ServeHTTP), config)
+	return ConfigMiddleware(http.HandlerFunc(router.ServeHTTP), cfg)
 }
