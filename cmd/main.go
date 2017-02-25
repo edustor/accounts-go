@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	router := app.Router(cfg.FromEnv())
+	router := app.Router(cfg.Default())
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.Println("Listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", router))

@@ -8,6 +8,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"log"
 	"github.com/edustor/accounts-go/app/cfg"
+	"time"
 )
 
 func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -17,7 +18,10 @@ func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"foo": "bar",
+		"iat": time.Now().Unix(),
+		"exp": time.Now().Add(config.TokenExpirationTime).Unix(),
+		"scope": "test",
+		"sub": "test",
 	})
 
 	key := config.Jwt.RsaPrivateKey
@@ -28,7 +32,6 @@ func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 
 	fmt.Fprint(w, signedToken)
-
 }
 
 func ConfigMiddleware(h http.HandlerFunc, config interface{}) http.HandlerFunc {
