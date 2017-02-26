@@ -9,6 +9,7 @@ import (
 	"log"
 	"github.com/edustor/accounts-go/app/cfg"
 	"time"
+	"github.com/urfave/negroni"
 )
 
 func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -34,17 +35,23 @@ func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Fprint(w, signedToken)
 }
 
-func ConfigMiddleware(h http.HandlerFunc, config interface{}) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func ConfigMiddleware(config cfg.Config) negroni.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, cfg.ConfigKey, config)
 		r = r.WithContext(ctx)
-		h(w, r)
+		next(rw, r)
 	}
 }
 
-func Router(cfg cfg.Config) http.Handler {
+func Router(config cfg.Config) http.Handler {
 	router := httprouter.New()
 	router.GET("/", index)
-	return ConfigMiddleware(http.HandlerFunc(router.ServeHTTP), cfg)
+
+	n := negroni.Classic()
+	negroni.NewLogger()
+	n.Use(ConfigMiddleware(config))
+	n.UseHandler(router)
+
+	return n
 }
