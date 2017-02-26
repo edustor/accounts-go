@@ -1,19 +1,16 @@
 package rest
 
 import (
-	"github.com/julienschmidt/httprouter"
-	"net/http"
-	"fmt"
-	"context"
 	"github.com/dgrijalva/jwt-go"
 	"log"
-	"github.com/edustor/accounts-go/app/cfg"
+	"github.com/edustor/accounts-go/app/conf"
 	"time"
-	"github.com/urfave/negroni"
+	"gopkg.in/gin-gonic/gin.v1"
 )
 
-func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	config, ok := r.Context().Value(cfg.ConfigKey).(cfg.Config)
+func index(c *gin.Context) {
+	_config, ok := c.Get("config")
+	config, ok := _config.(conf.Config)
 	if !ok {
 		log.Panic("Can't get token from context")
 	}
@@ -32,27 +29,36 @@ func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		log.Panic(err)
 	}
 
-	fmt.Fprint(w, signedToken)
+	c.String(200, signedToken)
 }
 
-func ConfigMiddleware(config cfg.Config) negroni.HandlerFunc {
-	return func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, cfg.ConfigKey, config)
-		r = r.WithContext(ctx)
-		next(rw, r)
+func ConfigMiddleware(config conf.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set("config", config)
+		c.Next()
 	}
 }
 
-func Router(config cfg.Config) http.Handler {
-	router := httprouter.New()
+func ErrorMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
+		if len(c.Errors) != 0 {
+			c.Header("Content-Type", "application/json")
+			c.JSON(0, map[string]interface{}{
+				"success": "false",
+				"errors": c.Errors.Errors(),
+			})
+		}
+	}
+}
+
+func Router(config conf.Config) *gin.Engine {
+	router := gin.Default()
+	router.Use(ConfigMiddleware(config))
+	router.Use(ErrorMiddleware())
+
 	router.GET("/", index)
 	router.POST("/oauth2/token", tokenEndpoint)
 
-	n := negroni.Classic()
-	negroni.NewLogger()
-	n.Use(ConfigMiddleware(config))
-	n.UseHandler(router)
-
-	return n
+	return router
 }

@@ -1,10 +1,8 @@
-package cfg
+package conf
 
 import "time"
 
 type contextKey int
-
-const ConfigKey contextKey = 0
 
 //noinspection GoNameStartsWithPackageName
 type Config struct {

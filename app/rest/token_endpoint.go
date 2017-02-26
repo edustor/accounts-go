@@ -1,31 +1,28 @@
 package rest
 
 import (
-	"github.com/julienschmidt/httprouter"
-	"net/http"
-	"log"
-	"fmt"
+	"gopkg.in/gin-gonic/gin.v1"
+	"errors"
 )
 
-func tokenEndpoint(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	err := r.ParseMultipartForm(10 * 1024 ^ 2)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Faild to parse form data %v", err), http.StatusBadRequest)
-		return
-	}
-	grantType := r.Form.Get("grant_type")
-	log.Println(r.Form)
+func tokenEndpoint(c *gin.Context) {
+	grantType := c.PostForm("grant_type")
 	switch grantType {
 	case "password":
-		username := r.Form.Get("username")
-		password := r.Form.Get("password")
+		username := c.PostForm("username")
+		password := c.PostForm("password")
+
 		if username == "" || password == "" {
-			http.Error(w, "'username' and 'password fields are required'", http.StatusBadRequest)
+			c.AbortWithError(400, errors.New("'username' and 'password fields are required'"))
 		}
 
 		processPasswordGrant(username, password)
+	case "":
+		c.Status(400)
+		c.Error(errors.New("grant_type field is required"))
 	default:
-		http.Error(w, "Unsupported grant type", http.StatusBadRequest)
+		c.Status(400)
+		c.Error(errors.New("Unsupported grant type"))
 		return
 	}
 }
