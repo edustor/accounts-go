@@ -9,10 +9,11 @@ import (
 )
 
 func index(c *gin.Context) {
-	_config, ok := c.Get("config")
-	config, ok := _config.(conf.Config)
-	if !ok {
-		log.Panic("Can't get token from context")
+	config, err := conf.FromGinContext(c)
+	if err != nil {
+		c.Status(500)
+		c.Error(err)
+		return
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
