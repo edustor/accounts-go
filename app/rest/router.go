@@ -1,4 +1,4 @@
-package app
+package rest
 
 import (
 	"github.com/julienschmidt/httprouter"
@@ -47,6 +47,7 @@ func ConfigMiddleware(config cfg.Config) negroni.HandlerFunc {
 func Router(config cfg.Config) http.Handler {
 	router := httprouter.New()
 	router.GET("/", index)
+	router.POST("/oauth2/token", tokenEndpoint)
 
 	n := negroni.Classic()
 	negroni.NewLogger()

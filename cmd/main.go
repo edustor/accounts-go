@@ -1,15 +1,15 @@
 package main
 
 import (
-	"github.com/edustor/accounts-go/app"
 	"log"
 	"net/http"
 	"github.com/edustor/accounts-go/app/cfg"
+	"github.com/edustor/accounts-go/app/rest"
 )
 
 func main() {
-	router := app.Router(cfg.Default())
+	router := rest.Router(cfg.Default())
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	log.Println("Listening on :8080")
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Println("Listening on :8081")
+	log.Fatal(http.ListenAndServe(":8081", router))
 }
